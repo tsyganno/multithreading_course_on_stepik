@@ -1,25 +1,25 @@
-from time import sleep
-from random import uniform
 import threading
+from time import sleep
+from itertools import count
 
+count = count()
 
-def task():
-    work_time = uniform(0.1, 2)  # рандомное значение от 0.1 до 2 секунд
-    sleep(work_time)
-    print(f"task worked {work_time:.5f}")
+def trace_func(frame, event, arg):
+    print(f"{next(count)} executing trace func with {threading.current_thread().name=}")
+    print(f"{frame=}\n{event=}\n{arg=}")
 
+def get_inform():
+    print(f"{threading.current_thread().name=}")
+    print(f"{threading.current_thread().ident=}")
+    print(f"{threading.current_thread().native_id=}")
+    print(f"{threading.get_ident()=}")
+    print(f"{threading.get_native_id()=}")
+    print("---------------")
+    sleep(2)
 
-threads = []
-for _ in range(50):
-    thread = threading.Thread(target=task, daemon=True)
-    thread.start()
-    threads.append(thread)
+threading.settrace(trace_func)
 
-for thread in threads:
-    thread.join(0.01)
-
-
-
-
-
+thr = [threading.Thread(target=get_inform) for _ in range(1)]
+for t in thr:
+    t.start()
 

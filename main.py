@@ -1,15 +1,25 @@
 import threading
 import time
 
-
-def test(timeout: int) -> None:
-    print(f"{threading.current_thread().name} started")
-    time.sleep(timeout)
-    print(f"{threading.current_thread().name} executed")
+_block, _timer, _value = False, 0, 0
 
 
-timer = threading.Timer(interval=1, function=test, args=(3, ))
-timer.name = "my_timer"
-timer.daemon = True
-timer.start()
-print(threading.active_count())
+def task(sema: threading.Semaphore, text):
+    s = sema.acquire(blocking=_block, timeout=_timer)
+    print(f"thread id = {threading.current_thread().ident} print {text}, acquire={s}, value= {sema._value}")
+    time.sleep(1)
+    sema.release()
+
+
+semaphore = threading.Semaphore(_value)
+
+thr = []
+for i in range(20):
+    thr.append(threading.Thread(target=task, args=(semaphore, i)))
+for t in thr:
+    t.start()
+for t in thr:
+    t.join()
+
+print(semaphore._value)
+

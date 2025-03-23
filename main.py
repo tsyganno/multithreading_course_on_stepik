@@ -1,25 +1,19 @@
+from concurrent.futures import ThreadPoolExecutor
 import threading
 import time
 
-_block, _timer, _value = False, 0, 0
+
+def task(n):
+    name = threading.current_thread().name
+    s = n/10
+    print(f"Поток {name} засыпает на {s} секунд")
+    time.sleep(s)
+    return f"Поток {name} завершился, проспал {s} секунд"
 
 
-def task(sema: threading.Semaphore, text):
-    s = sema.acquire(blocking=_block, timeout=_timer)
-    print(f"thread id = {threading.current_thread().ident} print {text}, acquire={s}, value= {sema._value}")
-    time.sleep(1)
-    sema.release()
-
-
-semaphore = threading.Semaphore(_value)
-
-thr = []
-for i in range(20):
-    thr.append(threading.Thread(target=task, args=(semaphore, i)))
-for t in thr:
-    t.start()
-for t in thr:
-    t.join()
-
-print(semaphore._value)
-
+with ThreadPoolExecutor(max_workers=5) as pool:  # <- ?
+    try:
+        for r in pool.map(task, range(1, 11), timeout=0.55):
+            print(r)
+    except TimeoutError:
+        print("Завершение по таймауту!")
